@@ -25,11 +25,21 @@ const MAX_HISTORIAL = 500;
 
 // ---- Recibir posicion desde el dispositivo ----
 app.post("/api/location", (req, res) => {
-  const { serial, lat, lon, sats, hdop } = req.body || {};
+  const { serial, lat, lon, sats, hdop, vel } = req.body || {};
 
   // Validacion basica
   if (!serial || typeof lat !== "number" || typeof lon !== "number") {
     return res.status(400).json({ ok: false, error: "Faltan datos: serial, lat, lon" });
+  }
+
+  const velActual = typeof vel === "number" ? vel : null;
+
+  // Velocidad maxima por dispositivo
+  if (velActual !== null) {
+    const previaMax = (ultimaPosicion[serial] && ultimaPosicion[serial].velMax) || 0;
+    var velMax = Math.max(previaMax, velActual);
+  } else {
+    var velMax = (ultimaPosicion[serial] && ultimaPosicion[serial].velMax) || null;
   }
 
   const punto = {
@@ -38,6 +48,8 @@ app.post("/api/location", (req, res) => {
     lon,
     sats: sats ?? null,
     hdop: hdop ?? null,
+    vel: velActual,
+    velMax: velMax,
     recibido: new Date().toISOString(),
   };
 
@@ -47,7 +59,7 @@ app.post("/api/location", (req, res) => {
   historial[serial].push({ lat, lon, recibido: punto.recibido });
   if (historial[serial].length > MAX_HISTORIAL) historial[serial].shift();
 
-  console.log(`[${punto.recibido}] ${serial}: ${lat}, ${lon} (sats:${sats ?? "?"} hdop:${hdop ?? "?"})`);
+  console.log(`[${punto.recibido}] ${serial}: ${lat}, ${lon} (sats:${sats ?? "?"} hdop:${hdop ?? "?"} vel:${velActual ?? "?"}km/h)`);
 
   res.json({ ok: true });
 });

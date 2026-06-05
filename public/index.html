@@ -139,7 +139,11 @@
             marcadores[d.serial] = L.marker([d.lat, d.lon], { icon: iconoAntena() }).addTo(mapa);
           }
           marcadores[d.serial].bindPopup(
-            `<b>${d.serial}</b><br>Lat: ${d.lat.toFixed(5)}<br>Lon: ${d.lon.toFixed(5)}<br>Sats: ${d.sats ?? "?"} · HDOP: ${d.hdop ?? "?"}`
+            `<b>${d.serial}</b><br>` +
+            `Lat: ${d.lat.toFixed(5)}<br>Lon: ${d.lon.toFixed(5)}<br>` +
+            `Vel actual: ${d.vel != null ? d.vel.toFixed(1) + " km/h" : "?"}<br>` +
+            `Vel maxima: ${d.velMax != null ? d.velMax.toFixed(1) + " km/h" : "?"}<br>` +
+            `Sats: ${d.sats ?? "?"} · HDOP: ${d.hdop ?? "?"}`
           );
 
           // Trayectoria (historial)
