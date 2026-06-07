@@ -77,6 +77,22 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true, dispositivos: Object.keys(ultimaPosicion).length });
 });
 
+// ---- Limpiar historial (borra trayectorias y posiciones) ----
+// Borra todo, o solo un serial con ?serial=XXX
+app.post("/api/clear", (req, res) => {
+  const serial = (req.query.serial || (req.body && req.body.serial)) || null;
+  if (serial) {
+    delete historial[serial];
+    delete ultimaPosicion[serial];
+    console.log(`Historial borrado para ${serial}`);
+  } else {
+    for (const k in historial) delete historial[k];
+    for (const k in ultimaPosicion) delete ultimaPosicion[k];
+    console.log("Historial completo borrado");
+  }
+  res.json({ ok: true });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`De Cosmico tracker escuchando en puerto ${PORT}`);
