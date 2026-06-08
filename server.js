@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // ---- OTA: version de firmware disponible ----
 // Subir el archivo firmware.bin a la carpeta /firmware y actualizar este numero.
 // El equipo compara su version con esta: si la del servidor es mayor, se actualiza.
-const FIRMWARE_VERSION = 6;
+const FIRMWARE_VERSION = 5;
 const FIRMWARE_PATH = path.join(__dirname, "firmware", "firmware.bin");
 
 // ---- Almacenamiento en memoria ----
@@ -118,7 +118,9 @@ app.get("/api/firmware/bin", (req, res) => {
   if (!fs.existsSync(FIRMWARE_PATH)) {
     return res.status(404).send("No hay firmware cargado");
   }
+  const stat = fs.statSync(FIRMWARE_PATH);
   res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader("Content-Length", stat.size);   // httpUpdate del ESP32 necesita el tamano
   res.setHeader("Content-Disposition", "attachment; filename=firmware.bin");
   fs.createReadStream(FIRMWARE_PATH).pipe(res);
 });
