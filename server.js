@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // ---- OTA: version de firmware disponible ----
 // Subir el archivo firmware.bin a la carpeta /firmware y actualizar este numero.
 // El equipo compara su version con esta: si la del servidor es mayor, se actualiza.
-const FIRMWARE_VERSION = 5;
+const FIRMWARE_VERSION = 6;
 const FIRMWARE_PATH = path.join(__dirname, "firmware", "firmware.bin");
 
 // ---- Almacenamiento en memoria ----
