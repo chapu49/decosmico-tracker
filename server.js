@@ -3,18 +3,28 @@
  * Version simple para prototipo: guarda posiciones en memoria (sin base de datos).
  *
  * Rutas:
- *   POST /api/location   -> el Heltec envia: { serial, lat, lon, sats, hdop }
- *   GET  /api/locations  -> el dashboard lee todas las ultimas posiciones + historial
- *   GET  /              -> el dashboard (mapa)
- *   GET  /api/health     -> chequeo de que el servidor vive
+ *   POST /api/location        -> el Heltec envia: { serial, lat, lon, sats, hdop, vel }
+ *   GET  /api/locations       -> el dashboard lee las ultimas posiciones + historial
+ *   GET  /                    -> el dashboard (mapa)
+ *   GET  /api/health          -> chequeo de que el servidor vive
+ *   POST /api/clear           -> limpia historial
+ *   GET  /api/firmware/version-> el equipo consulta la version OTA disponible
+ *   GET  /api/firmware/bin    -> el equipo descarga el firmware nuevo
  */
 
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// ---- OTA: version de firmware disponible ----
+// Subir el archivo firmware.bin a la carpeta /firmware y actualizar este numero.
+// El equipo compara su version con esta: si la del servidor es mayor, se actualiza.
+const FIRMWARE_VERSION = 6;
+const FIRMWARE_PATH = path.join(__dirname, "firmware", "firmware.bin");
 
 // ---- Almacenamiento en memoria ----
 // ultimaPosicion[serial] = { serial, lat, lon, sats, hdop, recibido }
@@ -93,7 +103,28 @@ app.post("/api/clear", (req, res) => {
   res.json({ ok: true });
 });
 
+// ---- OTA: el equipo consulta que version hay disponible ----
+app.get("/api/firmware/version", (req, res) => {
+  const existe = fs.existsSync(FIRMWARE_PATH);
+  res.json({
+    version: FIRMWARE_VERSION,
+    disponible: existe,
+    tam: existe ? fs.statSync(FIRMWARE_PATH).size : 0,
+  });
+});
+
+// ---- OTA: el equipo descarga el binario ----
+app.get("/api/firmware/bin", (req, res) => {
+  if (!fs.existsSync(FIRMWARE_PATH)) {
+    return res.status(404).send("No hay firmware cargado");
+  }
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader("Content-Disposition", "attachment; filename=firmware.bin");
+  fs.createReadStream(FIRMWARE_PATH).pipe(res);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`De Cosmico tracker escuchando en puerto ${PORT}`);
+  console.log(`Firmware OTA: version ${FIRMWARE_VERSION}, archivo ${fs.existsSync(FIRMWARE_PATH) ? "presente" : "AUSENTE"}`);
 });
